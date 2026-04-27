@@ -11,8 +11,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_staff', 'is_active']
-    search_fields = ['username', 'email', 'first_name', 'last_name', 'department']
+    filterset_fields = ['is_staff', 'is_active', 'role']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'department', 'emsi_id']
     ordering_fields = ['username', 'date_joined']
     ordering = ['username']
 

@@ -1,73 +1,76 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
+from django.test import TestCase
 from rest_framework import status
+from rest_framework.test import APIClient
+
 
 User = get_user_model()
 
 
 class CustomUserModelTest(TestCase):
-    """Tests pour le modèle CustomUser."""
-    
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123',
+            emsi_id='EMSI-ELV-001',
             phone='123456789',
-            department='IT'
+            department='IT',
+            role=User.ROLE_STUDENT,
         )
-    
+
     def test_user_creation(self):
-        """Test la création d'un utilisateur."""
         self.assertEqual(self.user.username, 'testuser')
         self.assertEqual(self.user.email, 'test@example.com')
         self.assertEqual(self.user.phone, '123456789')
         self.assertEqual(self.user.department, 'IT')
-    
+        self.assertEqual(self.user.emsi_id, 'EMSI-ELV-001')
+
     def test_user_str(self):
-        """Test la représentation string d'un utilisateur."""
         self.assertEqual(str(self.user), 'testuser')
 
 
 class UserViewSetTest(TestCase):
-    """Tests pour le UserViewSet."""
-    
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password='testpass123',
+            emsi_id='EMSI-ELV-002',
         )
         self.staff_user = User.objects.create_user(
             username='staffuser',
             email='staff@example.com',
             password='staffpass123',
-            is_staff=True
+            emsi_id='EMSI-PROF-001',
+            is_staff=True,
         )
-    
+
     def test_user_register(self):
-        """Test l'enregistrement d'un nouvel utilisateur."""
-        response = self.client.post('/api/auth/register/', {
-            'username': 'newuser',
-            'email': 'new@example.com',
-            'password': 'newpass123',
-            'first_name': 'New',
-            'last_name': 'User'
-        })
+        response = self.client.post(
+            '/api/auth/register/',
+            {
+                'username': 'newuser',
+                'email': 'new@example.com',
+                'password': 'newpass123',
+                'first_name': 'New',
+                'last_name': 'User',
+                'role': User.ROLE_TEACHER,
+                'emsi_id': 'EMSI-ENS-900',
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 3)
-    
+
     def test_current_user_view(self):
-        """Test la récupération de l'utilisateur actuel."""
         self.client.force_authenticate(user=self.user)
         response = self.client.get('/api/auth/me/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'testuser')
-    
+        self.assertEqual(response.data['emsi_id'], 'EMSI-ELV-002')
+
     def test_user_list_authenticated(self):
-        """Test la liste des utilisateurs avec authentification."""
         self.client.force_authenticate(user=self.user)
         response = self.client.get('/api/users/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

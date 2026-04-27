@@ -1,16 +1,50 @@
 from django.db import models
 
+
 class Room(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    TYPE_CLASSROOM = 'CLASSROOM'
+    TYPE_LAB = 'LAB'
+    TYPE_CONFERENCE = 'CONFERENCE'
+
+    ROOM_TYPE_CHOICES = [
+        (TYPE_CLASSROOM, 'Salle de cours'),
+        (TYPE_LAB, 'Laboratoire informatique'),
+        (TYPE_CONFERENCE, 'Salle de conference'),
+    ]
+
+    building = models.CharField(max_length=100, default='EMSI')
+    floor = models.PositiveSmallIntegerField(default=1)
+    code = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    name = models.CharField(max_length=100, blank=True)
+    room_type = models.CharField(max_length=20, choices=ROOM_TYPE_CHOICES, default=TYPE_CLASSROOM)
     capacity = models.PositiveIntegerField()
     location = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
+    equipment = models.TextField(
+        'Equipements',
+        blank=True,
+        help_text='Liste des equipements disponibles (ex: projecteur, tableau, wifi)',
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['floor', 'code']
 
     def __str__(self):
-        return self.name
+        return self.code
+
+    @property
+    def equipment_items(self):
+        return [item.strip() for item in self.equipment.split(',') if item.strip()]
+
+    @property
+    def display_name(self):
+        return self.name or self.code
+
+    @property
+    def floor_label(self):
+        if self.room_type == self.TYPE_CONFERENCE:
+            return 'Zone conferences'
+        return f'Etage {self.floor}'

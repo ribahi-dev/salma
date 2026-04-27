@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Reservation #{{ booking.id }} | SRIS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="h3 mb-1">Detail de la reservation</h1>
+        <p class="text-muted mb-0">{{ booking.room.code }} - {{ booking.date }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if booking.status != 'ANNULEE' %}
+        <a href="{% url 'booking_update' booking.id %}" class="btn btn-outline-secondary">Modifier</a>
+        {% endif %}
+        <a href="{% url 'booking_list' %}" class="btn btn-primary">Retour</a>
+</div>
+</div>
+{% endblock %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Salle</dt>
+                    <dd class="col-sm-8">{{ booking.room.code }} - {{ booking.room.display_name }}</dd>
+                    <dt class="col-sm-4">Date</dt>
+                    <dd class="col-sm-8">{{ booking.date }}</dd>
+                    <dt class="col-sm-4">Horaire</dt>
+                    <dd class="col-sm-8">{{ booking.start_time }} - {{ booking.end_time }}</dd>
+                    <dt class="col-sm-4">Statut</dt>
+                    <dd class="col-sm-8"><span class="status-badge status-{{ booking.status|lower }}">{{ booking.get_status_display }}</span></dd>
+                    <dt class="col-sm-4">Demandeur</dt>
+                    <dd class="col-sm-8">{{ booking.user.username }}</dd>
+                    <dt class="col-sm-4">Motif</dt>
+                    <dd class="col-sm-8">{{ booking.purpose }}</dd>
+                    <dt class="col-sm-4">Creee le</dt>
+                    <dd class="col-sm-8">{{ booking.created_at }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

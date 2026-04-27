@@ -23,6 +23,7 @@ from bookings.views import BookingViewSet
 from users.views import UserViewSet, UserRegisterView, CurrentUserView
 from sris.views import AppSettingViewSet
 from .views import home_view
+from . import views
 
 router = routers.DefaultRouter()
 router.register(r'rooms', RoomViewSet, basename='room')
@@ -33,9 +34,13 @@ router.register(r'settings', AppSettingViewSet, basename='setting')
 urlpatterns = [
     path('', home_view, name='home'),
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/register/', UserRegisterView.as_view(), name='user-register'),
     path('api/auth/me/', CurrentUserView.as_view(), name='user-me'),
     path('api/', include(router.urls)),
+    
+    # Frontend URLs
+    path('', include('core.frontend_urls')),
 ]

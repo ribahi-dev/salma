@@ -55,4 +55,4 @@ class AppSettingViewSetTest(TestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get('/api/settings/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
+        self.assertGreaterEqual(response.data['count'], 1)

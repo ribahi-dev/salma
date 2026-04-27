@@ -34,7 +34,8 @@ def get_room_availability(room_id, date):
     return {
         'room': {
             'id': room.id,
-            'name': room.name,
+            'code': room.code,
+            'name': room.display_name,
             'capacity': room.capacity,
             'location': room.location,
         },

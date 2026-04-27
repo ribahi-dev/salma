@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from rest_framework import serializers
-from datetime import datetime, timedelta
-from .models import Booking
+
 from rooms.models import Room
 from users.serializers import CustomUserSerializer
+
+from .models import Booking
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -13,64 +16,73 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['id', 'user', 'room', 'room_details', 'date', 'start_time', 'end_time', 'status', 'purpose', 'conflicts', 'created_at']
+        fields = [
+            'id',
+            'user',
+            'room',
+            'room_details',
+            'date',
+            'start_time',
+            'end_time',
+            'status',
+            'purpose',
+            'conflicts',
+            'created_at',
+        ]
         read_only_fields = ['id', 'user', 'created_at', 'conflicts']
 
     def get_room_details(self, obj):
-        """Retourne les détails complets de la salle."""
         return {
             'id': obj.room.id,
-            'name': obj.room.name,
+            'code': obj.room.code,
+            'name': obj.room.display_name,
             'capacity': obj.room.capacity,
+            'floor': obj.room.floor,
+            'room_type': obj.room.room_type,
             'location': obj.room.location,
+            'equipment': obj.room.equipment,
         }
 
     def get_conflicts(self, obj):
-        """Retourne les réservations en conflit."""
         conflicts = Booking.objects.filter(
             room=obj.room,
             date=obj.date,
             status__in=['EN_ATTENTE', 'CONFIRMEE'],
             start_time__lt=obj.end_time,
-            end_time__gt=obj.start_time
+            end_time__gt=obj.start_time,
         ).exclude(pk=obj.pk).values('id', 'start_time', 'end_time', 'user__username')
         return list(conflicts)
 
     def validate(self, attrs):
         start_time = attrs.get('start_time')
         end_time = attrs.get('end_time')
-        date = attrs.get('date')
+        booking_date = attrs.get('date')
         room = attrs.get('room')
 
-        # Validation basique des heures
         if start_time and end_time and start_time >= end_time:
-            raise serializers.ValidationError("L'heure de fin doit être après l'heure de début.")
+            raise serializers.ValidationError("L'heure de fin doit etre apres l'heure de debut.")
 
-        # Validation date pas dans le passé
-        if date and date < datetime.now().date():
-            raise serializers.ValidationError("La date ne peut pas être dans le passé.")
+        if booking_date and booking_date < datetime.now().date():
+            raise serializers.ValidationError('La date ne peut pas etre dans le passe.')
 
-        # Détection de conflits
-        if date and room and start_time and end_time:
+        if room and not room.is_active:
+            raise serializers.ValidationError('Cette salle est inactive et ne peut pas etre reservee.')
+
+        if booking_date and room and start_time and end_time:
             conflicts = Booking.objects.filter(
                 room=room,
-                date=date,
+                date=booking_date,
                 status__in=['EN_ATTENTE', 'CONFIRMEE'],
                 start_time__lt=end_time,
-                end_time__gt=start_time
+                end_time__gt=start_time,
             )
-            
-            # Exclure la réservation actuelle si c'est une modification
             if self.instance:
                 conflicts = conflicts.exclude(pk=self.instance.pk)
 
             if conflicts.exists():
-                conflicting_bookings = [
-                    f"{b.start_time}-{b.end_time} ({b.user.username})"
-                    for b in conflicts
-                ]
+                conflicting_bookings = [f"{b.start_time}-{b.end_time} ({b.user.username})" for b in conflicts]
                 raise serializers.ValidationError(
-                    f"Conflit détecté: la salle est réservée: {', '.join(conflicting_bookings)}"
+                    f"Conflit detecte: la salle est reservee: {', '.join(conflicting_bookings)}"
                 )
 
         return attrs
@@ -81,13 +93,12 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class BookingAvailabilitySerializer(serializers.Serializer):
-    """Serializer pour vérifier les créneaux disponibles."""
     room = serializers.IntegerField()
     date = serializers.DateField()
-    
+
     def validate(self, attrs):
         try:
             Room.objects.get(id=attrs['room'])
         except Room.DoesNotExist:
-            raise serializers.ValidationError("Salle non trouvée.")
+            raise serializers.ValidationError('Salle non trouvee.')
         return attrs

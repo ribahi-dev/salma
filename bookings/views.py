@@ -10,7 +10,7 @@ from core.permissions import IsBookingOwnerOrStaff
 
 
 class BookingViewSet(viewsets.ModelViewSet):
-    queryset = Booking.objects.order_by('date', 'start_time')
+    queryset = Booking.objects.select_related('room', 'user').order_by('date', 'start_time')
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated, IsBookingOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -22,8 +22,8 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Booking.objects.order_by('-created_at')
-        return Booking.objects.filter(user=user).order_by('-created_at')
+            return Booking.objects.select_related('room', 'user').order_by('-created_at')
+        return Booking.objects.select_related('room', 'user').filter(user=user).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -51,7 +51,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         ).order_by('start_time').values('start_time', 'end_time', 'user__username', 'status')
         
         return Response({
-            'room': {'id': room.id, 'name': room.name, 'capacity': room.capacity},
+            'room': {'id': room.id, 'code': room.code, 'name': room.display_name, 'capacity': room.capacity},
             'date': date,
             'bookings': list(bookings),
             'availability': self._calculate_availability(list(bookings))
