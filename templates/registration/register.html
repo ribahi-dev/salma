@@ -33,11 +33,6 @@
                     {{ form.last_name.errors }}
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label" for="{{ form.username.id_for_label }}">Nom d'utilisateur</label>
-                    {{ form.username }}
-                    {{ form.username.errors }}
-                </div>
-                <div class="col-md-6">
                     <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
                     {{ form.email }}
                     {{ form.email.errors }}
@@ -72,6 +67,9 @@
                     {{ form.password2 }}
                     {{ form.password2.errors }}
                 </div>
+            </div>
+            <div class="alert alert-light border mt-4 mb-0 small">
+                Le nom d'utilisateur est genere automatiquement a partir de votre email. Vous pourrez vous connecter avec votre email ou via Google.
             </div>
             <button type="submit" class="btn btn-primary w-100 mt-4">Creer mon compte</button>
         </form>

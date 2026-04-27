@@ -13,6 +13,7 @@ class CustomUser(AbstractUser):
         (ROLE_PROFESSOR, 'Professeur'),
     ]
 
+    email = models.EmailField('Adresse email', unique=True)
     role = models.CharField('Role', max_length=20, choices=ROLE_CHOICES, default=ROLE_STUDENT)
     emsi_id = models.CharField('ID EMSI', max_length=30, unique=True, blank=True, null=True)
     phone = models.CharField('Telephone', max_length=30, blank=True)

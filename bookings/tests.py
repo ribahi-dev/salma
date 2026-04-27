@@ -60,6 +60,18 @@ class BookingModelTest(TestCase):
         with self.assertRaises(ValidationError):
             invalid_booking.save()
 
+    def test_booking_duration_rules_enforced(self):
+        invalid_booking = Booking(
+            user=self.user,
+            room=self.room,
+            date=date.today() + timedelta(days=1),
+            start_time=time(8, 0),
+            end_time=time(8, 15),
+            purpose='Test court',
+        )
+        with self.assertRaises(ValidationError):
+            invalid_booking.save()
+
 
 class BookingViewSetTest(TestCase):
     def setUp(self):

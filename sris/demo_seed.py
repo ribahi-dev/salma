@@ -220,6 +220,18 @@ def seed_demo_data():
             '240',
             'Duree maximale d une reservation en minutes.',
         ),
+        (
+            'WORKDAY_START_HOUR',
+            'Debut des reservations',
+            '8',
+            'Heure de debut autorisee pour les reservations.',
+        ),
+        (
+            'WORKDAY_END_HOUR',
+            'Fin des reservations',
+            '20',
+            'Heure limite de fin des reservations.',
+        ),
     ]
 
     for key, label, value, description in settings_data:

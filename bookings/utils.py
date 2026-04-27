@@ -4,10 +4,13 @@ from datetime import datetime, time as datetime_time
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
 
 from rooms.models import Room
 
 from .models import Booking
+
+User = get_user_model()
 
 
 def get_room_availability(room_id, date):
@@ -116,3 +119,34 @@ def notify_booking_status(booking):
         [booking.user.email],
         fail_silently=True,
     )
+
+
+def notify_booking_created(booking):
+    recipients = list(
+        User.objects.filter(is_staff=True, is_active=True)
+        .exclude(email='')
+        .values_list('email', flat=True)
+    )
+
+    if booking.user.email and booking.user.email not in recipients:
+        recipients.append(booking.user.email)
+
+    if not recipients:
+        return
+
+    subject = f'EMSI Booking - nouvelle demande pour {booking.room.code}'
+    message = '\n'.join(
+        [
+            'Une nouvelle demande de reservation a ete enregistree.',
+            '',
+            f'Salle: {booking.room.code}',
+            f'Demandeur: {booking.user.full_name_or_username}',
+            f'Profil: {booking.user.get_role_display()}',
+            f'Date: {booking.date}',
+            f'Horaires: {booking.start_time} - {booking.end_time}',
+            f'Activite: {booking.get_activity_type_display()}',
+            f'Participants: {booking.attendees_count}',
+            f'Objet: {booking.purpose}',
+        ]
+    )
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients, fail_silently=True)

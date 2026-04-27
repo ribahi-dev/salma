@@ -1,44 +1,55 @@
-# SRIS - Systeme de Reservation Intelligente des Salles
+# EMSI Booking - Plateforme de reservation des salles
 
-Application web Django pour la gestion des salles universitaires, des reservations et de la supervision administrative.
+Application Django de reservation et de pilotage des salles EMSI, pensee pour un usage reel:
+- inscription de nouveaux utilisateurs
+- connexion par email ou Google
+- soumission de demandes de reservation
+- approbation par un admin central
+- suivi des salles, des etages et des decisions
 
 ## Fonctionnalites
 
-- inscription et connexion des utilisateurs
-- gestion des roles: etudiant, enseignant, administrateur, administrateur systeme
-- consultation et filtrage des salles
+- comptes utilisateurs reels: etudiant, enseignant, professeur
+- email unique et profil EMSI complet
+- connexion web, API REST et JWT
+- connexion Google OAuth
 - creation, modification et annulation de reservations
-- detection automatique des conflits horaires
-- calendrier visuel des reservations
-- tableau de bord avec indicateurs
-- interface d'administration Django
-- API REST avec JWT
-- reinitialisation du mot de passe via le systeme Django
+- workflow admin: en attente, approuvee, refusee, annulee
+- centre d'administration avec filtres et actions groupees
+- notifications email sur creation et traitement des demandes
+- calendrier de reservations et supervision par etage
+- regles metier reelles:
+  - prevention des conflits
+  - capacite maximale des salles
+  - duree minimale et maximale
+  - fenetre de reservation configurable
+  - horaires de reservation configurables
 
-## Stack technique
+## Stack
 
-- Python
 - Django 5.2
 - Django REST Framework
+- django-allauth
 - SimpleJWT
+- WhiteNoise
 - Bootstrap 5
 - FullCalendar
-- SQLite en developpement
 
-## Installation
+## Installation locale
 
 ```bash
 pip install -r requirements.txt
+copy .env.example .env
 python manage.py migrate
 python manage.py seed_demo
 python manage.py runserver
 ```
 
-## Acces
+## Acces local
 
 - web: [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/)
-- admin: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
-- api: [http://127.0.0.1:8000/api/](http://127.0.0.1:8000/api/)
+- admin Django: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+- API: [http://127.0.0.1:8000/api/](http://127.0.0.1:8000/api/)
 
 ## Comptes de demonstration
 
@@ -51,40 +62,86 @@ python manage.py runserver
 
 ```bash
 python manage.py check
-python manage.py test
+python manage.py test bookings rooms users
 python manage.py seed_demo
 python manage.py createsuperuser
+python manage.py collectstatic
 ```
 
-## API principale
+## Configuration production
 
-- `POST /api/auth/register/`
-- `POST /api/auth/token/`
-- `POST /api/auth/token/refresh/`
-- `GET /api/auth/me/`
-- `GET /api/rooms/`
-- `GET /api/bookings/`
-- `POST /api/bookings/`
-- `POST /api/bookings/check_availability/`
-- `GET /api/settings/dashboard/`
+### 1. Variables d'environnement
+
+Copier `.env.example` puis renseigner:
+- `DJANGO_SECRET_KEY`
+- `DJANGO_DEBUG=False`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_CSRF_TRUSTED_ORIGINS`
+- `DATABASE_URL`
+- `EMAIL_*`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+### 2. Base de donnees
+
+Par defaut le projet utilise SQLite.
+
+Pour la production, utiliser PostgreSQL via:
+
+```env
+DATABASE_URL=postgresql://user:password@host:5432/emsi_booking
+```
+
+### 3. Emails reels
+
+Configurer un SMTP reel pour:
+- l'accueil des nouveaux utilisateurs
+- les notifications de nouvelles demandes
+- les validations/refus/annulations admin
+
+Exemple:
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.office365.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=...
+EMAIL_HOST_PASSWORD=...
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=noreply@votre-domaine.ma
+```
+
+### 4. Fichiers statiques
+
+Le projet est prepare pour WhiteNoise:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+### 5. Lancement serveur
+
+Exemple Linux:
+
+```bash
+gunicorn core.wsgi:application --bind 0.0.0.0:8000
+```
+
+## Regles metier configurables
+
+Les regles suivantes sont stockees dans `AppSetting`:
+- `MAX_BOOKING_DAYS`
+- `MIN_BOOKING_DURATION`
+- `MAX_BOOKING_DURATION`
+- `WORKDAY_START_HOUR`
+- `WORKDAY_END_HOUR`
 
 ## Qualite
 
-- validations serveur sur les formulaires et serializers
-- prevention des conflits de reservation
-- contraintes et index en base
-- tests automatises passes: `23/23`
-
-## Production
-
-Pour un deploiement production:
-
-- passer sur PostgreSQL
-- definir `DJANGO_DEBUG=False`
-- configurer `DJANGO_ALLOWED_HOSTS`
-- servir les fichiers statiques avec WhiteNoise ou un reverse proxy
-- configurer un backend email reel
+- validations serveur sur formulaires, serializers et modeles
+- tests backend automatisees
+- smoke test locale du parcours utilisateur et admin
 
 ## Statut
 
-Projet pret pour demonstration, soutenance et poursuite vers deploiement.
+Base solide pour deployment reel EMSI, avec onboarding utilisateur, administration centrale et reservation exploitable en production.

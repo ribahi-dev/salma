@@ -11,11 +11,13 @@ from django.utils import timezone
 
 from bookings.forms import BookingForm, BookingReviewForm
 from bookings.models import Booking
-from bookings.utils import calculate_available_slots, notify_booking_status
+from bookings.utils import calculate_available_slots, notify_booking_created, notify_booking_status
 from rooms.forms import RoomForm
 from rooms.models import Room
 from users.forms import ProfileForm, RegisterForm
 from users.models import CustomUser
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 def _apply_booking_action(booking, reviewer, action, message_text=''):
@@ -80,7 +82,22 @@ def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            if user.email:
+                send_mail(
+                    'Bienvenue sur EMSI Booking',
+                    '\n'.join(
+                        [
+                            f'Bonjour {user.full_name_or_username},',
+                            '',
+                            'Votre compte EMSI Booking a ete cree avec succes.',
+                            'Vous pouvez maintenant vous connecter et soumettre vos demandes de reservation.',
+                        ]
+                    ),
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=True,
+                )
             messages.success(request, 'Compte cree avec succes. Vous pouvez maintenant vous connecter.')
             return redirect('login')
         messages.error(request, 'Merci de corriger les erreurs du formulaire.')
@@ -466,6 +483,7 @@ def booking_create_view(request):
             booking.user = request.user
             try:
                 booking.save()
+                notify_booking_created(booking)
                 messages.success(request, 'Reservation creee avec succes.')
                 return redirect('booking_list')
             except Exception as exc:

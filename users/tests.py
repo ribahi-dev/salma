@@ -51,7 +51,6 @@ class UserViewSetTest(TestCase):
         response = self.client.post(
             '/api/auth/register/',
             {
-                'username': 'newuser',
                 'email': 'new@example.com',
                 'password': 'newpass123',
                 'first_name': 'New',
@@ -62,6 +61,23 @@ class UserViewSetTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 3)
+        created_user = User.objects.get(email='new@example.com')
+        self.assertTrue(created_user.username.startswith('new'))
+
+    def test_user_register_rejects_duplicate_email(self):
+        response = self.client.post(
+            '/api/auth/register/',
+            {
+                'email': 'test@example.com',
+                'password': 'newpass123',
+                'first_name': 'New',
+                'last_name': 'User',
+                'role': User.ROLE_TEACHER,
+                'emsi_id': 'EMSI-ENS-901',
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
 
     def test_current_user_view(self):
         self.client.force_authenticate(user=self.user)

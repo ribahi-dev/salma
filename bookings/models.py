@@ -6,6 +6,7 @@ from django.db import models, transaction
 from django.utils import timezone
 
 from rooms.models import Room
+from sris.booking_rules import validate_booking_rules
 
 
 class Booking(models.Model):
@@ -90,6 +91,8 @@ class Booking(models.Model):
 
         if self.room.capacity and self.attendees_count > self.room.capacity:
             raise ValidationError('Le nombre de participants depasse la capacite de la salle.')
+
+        validate_booking_rules(self)
 
         conflicts = Booking.objects.filter(
             room=self.room,
